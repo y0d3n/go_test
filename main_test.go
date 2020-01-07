@@ -9,60 +9,43 @@ import (
 	"testing"
 )
 
-var (
-	answer string
-	buf    string
-	count  int
-	input  string
-)
+type body struct{ str string }
 
-func check(t *testing.T) {
-	if strings.Index(buf, "<pre>") > strings.Index(buf, "Problem Statement") {
-		return
-	}
-	count++
-
-	input = buf[strings.Index(buf, "<pre>")+5 : strings.Index(buf, "</pre>")-2]
-	set(&buf)
-	answer = buf[strings.Index(buf, "<pre>")+5 : strings.Index(buf, "</pre>")-2]
-	set(&buf)
-
-	fmt.Printf("Q%v answer: %s\treply: ", count, answer)
-	solve(strings.Fields(input))
-
-	if answer != reply {
-		t.Errorf("%v != %v", answer, reply)
-	}
+func (b *body) index(pre string) int {
+	return strings.Index(b.str, pre)
 }
 
-func set(buf *string) {
-	*buf = strings.Replace(*buf, "<pre>", "", 1)
-	*buf = strings.Replace(*buf, "</pre>", "", 1)
+func (b *body) rmPre() {
+	// <pre>と</pre>を先頭から1つずつ削除
+	b.str = strings.Replace(b.str, "<pre>", "", 1)
+	b.str = strings.Replace(b.str, "</pre>", "", 1)
 }
-func TestQ1(t *testing.T) {
+
+func TestSolve(t *testing.T) {
 	res, err := http.Get("https://atcoder.jp/contests/abc148/tasks/abc148_a")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer res.Body.Close()
-	body, err := ioutil.ReadAll(res.Body)
+	byteBody, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		log.Fatal(err)
 	}
-	buf = string(body)
-	set(&buf)
+	b := &body{string(byteBody)} // b.str = 問題ページのHTML
+	b.rmPre()                    // 使わないpreタグがあるので、1組消して調節
 
-	check(t)
-}
+	var input, answer string
+	for count := 1; b.index("<pre>") < b.index("Problem Statement"); count++ {
+		input = b.str[b.index("<pre>")+5 : b.index("</pre>")-2] // input = 入力例
+		b.rmPre()
+		answer = b.str[b.index("<pre>")+5 : b.index("</pre>")-2] // answer = 出力例
+		b.rmPre()
 
-func TestQ2(t *testing.T) {
-	check(t)
-}
+		fmt.Printf("Q%v answer: %v\treply : ", count, answer)
+		solve(strings.Fields(input)) // reply = 出力
 
-func TestQ3(t *testing.T) {
-	check(t)
-}
-
-func TestQ4(t *testing.T) {
-	check(t)
+		if answer != reply {
+			t.Errorf("\x1b[1;31mQ%v: %v != %v\x1b[0m", count, answer, reply)
+		}
+	}
 }
