@@ -34,18 +34,17 @@ func TestSolve(t *testing.T) {
 	b := &body{string(byteBody)} // b.str = 問題ページのHTML
 	b.rmPre()                    // 使わないpreタグがあるので、1組消して調節
 
-	var input, answer string
 	for count := 1; b.index("<pre>") < b.index("Problem Statement"); count++ {
-		input = b.str[b.index("<pre>")+5 : b.index("</pre>")-2] // input = 入力例
+		input := b.str[b.index("<pre>")+5 : b.index("</pre>")-2] // input = 入力例
 		b.rmPre()
-		answer = b.str[b.index("<pre>")+5 : b.index("</pre>")-2] // answer = 出力例
+		output := b.str[b.index("<pre>")+5 : b.index("</pre>")-2] // output = 出力例
 		b.rmPre()
 
-		fmt.Printf("Q%v answer: %v\treply : ", count, answer)
+		fmt.Printf("Q%v answer: %v\treply : ", count, output)
 		solve(strings.Fields(input)) // reply = 出力
 
-		if answer != reply {
-			t.Errorf("\x1b[1;31mQ%v: %v != %v\x1b[0m", count, answer, reply)
+		if output != reply {
+			t.Errorf("\x1b[1;31mQ%v: %v != %v\x1b[0m", count, output, reply)
 		}
 	}
 }
