@@ -49,17 +49,11 @@ func readFile(filename string) *data {
 		log.Fatal(err)
 	}
 	buf := make([]byte, 1000000)
-	for {
-		n, err := f.Read(buf)
-		if n == 0 {
-			break
-		}
-		if err != nil {
-			break
-		}
+	n, err := f.Read(buf)
+	if err != nil {
+		log.Fatal(err)
 	}
-
-	return &data{html: string(buf)}
+	return &data{html: string(buf[:n])}
 }
 
 func TestSolve(t *testing.T) {
