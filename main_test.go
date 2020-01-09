@@ -69,7 +69,7 @@ func TestSolve(t *testing.T) {
 			log.Fatal(err)
 		}
 	}
-	url := "https://atcoder.jp/contests/abc148/tasks/abc148_a"
+	url := "https://atcoder.jp/contests/abc148/tasks/abc148_b"
 	filename := url[strings.LastIndex(url, "/")+1:]
 	if !isExist("pages/" + filename) { // ioファイルがない場合、作成
 		createIoFile(url, "pages/"+filename)
