@@ -6,22 +6,17 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"testing"
 )
 
-type data struct{ html string }
-
-func (d *data) index(pre string) int {
-	return strings.Index(d.html, pre)
+func rmPre(buf *string) { // <pre>と</pre>を1つ削除
+	*buf = strings.Replace(*buf, "<pre>", "", 1)
+	*buf = strings.Replace(*buf, "</pre>", "", 1)
 }
 
-func (d *data) rmPre() {
-	d.html = strings.Replace(d.html, "<pre>", "", 1)
-	d.html = strings.Replace(d.html, "</pre>", "", 1)
-}
-
-func createFile(url, filename string) {
+func createIoFile(url, filename string) { // urlの問題ページを基に、ioファイルを作成する
 	res, err := http.Get(url)
 	if err != nil {
 		log.Fatal(err)
@@ -31,50 +26,64 @@ func createFile(url, filename string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	html := string(byteBody)
+	rmPre(&html)
 
 	f, _ := os.Create(filename)
 	defer f.Close()
-	f.Write(byteBody)
+
+	for i := 1; strings.Index(html, "<pre>") < strings.Index(html, "Problem Statement"); i++ {
+		input := html[strings.Index(html, "<pre>")+5 : strings.Index(html, "</pre>")-2]
+		rmPre(&html)
+		output := html[strings.Index(html, "<pre>")+5 : strings.Index(html, "</pre>")-2]
+		rmPre(&html)
+
+		f.Write([]byte("<input" + strconv.Itoa(i) + "\n" + input + "\n</input" + strconv.Itoa(i) +
+			"\n<output" + strconv.Itoa(i) + "\n" + output + "\n</output" + strconv.Itoa(i) + "\n"))
+	}
 }
 
-func isExist(filename string) bool {
+func isExist(filename string) bool { // ファイルが存在するかどうか
 	_, err := os.Stat(filename)
 	return err == nil
 }
 
-func readFile(filename string) *data {
+func readFile(filename string) string { // ファイルを読み込み、中身をreturn
 	f, err := os.Open(filename)
 	defer f.Close()
 	if err != nil {
 		log.Fatal(err)
 	}
-	buf := make([]byte, 1000000)
+	buf := make([]byte, 10000)
 	n, err := f.Read(buf)
 	if err != nil {
 		log.Fatal(err)
 	}
-	return &data{html: string(buf[:n])}
+	return string(buf[:n])
 }
 
 func TestSolve(t *testing.T) {
+	if !isExist("pages") { // pagesフォルダがない場合、作成
+		err := os.Mkdir("pages", 0777)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 	url := "https://atcoder.jp/contests/abc148/tasks/abc148_a"
 	filename := url[strings.LastIndex(url, "/")+1:]
-	if !isExist(filename) { // もし問題のHTMLファイルがない場合、作成する
-		createFile(url, filename)
+	if !isExist("pages/" + filename) { // ioファイルがない場合、作成
+		createIoFile(url, "pages/"+filename)
 	}
-	d := readFile(filename) // b.html = 問題ページのHTML
-	d.rmPre()               // 使わないpreタグがあるので、1組消して調節
-
-	for count := 1; d.index("<pre>") < d.index("Problem Statement"); count++ {
-		input := d.html[d.index("<pre>")+5 : d.index("</pre>")-2] // input = 入力例
-		d.rmPre()
-		output := d.html[d.index("<pre>")+5 : d.index("</pre>")-2] // output = 出力例
-		d.rmPre()
+	buf := readFile("pages/" + filename) // ioファイルから読み込み
+	for count := 1; strings.Index(buf, "<input"+strconv.Itoa(count)) != -1; count++ {
+		i, o := "input"+strconv.Itoa(count), "output"+strconv.Itoa(count)
+		input := buf[strings.Index(buf, "<"+i)+8 : strings.Index(buf, "</"+i)-1]  // input == 入力例
+		output := buf[strings.Index(buf, "<"+o)+9 : strings.Index(buf, "</"+o)-1] // output == 出力例
 
 		fmt.Printf("Q%v answer: %v\treply : ", count, output)
-		solve(strings.Fields(input)) // reply = 出力
+		solve(strings.Fields(input)) // reply = 自分の出力
 
-		if output != reply {
+		if output != reply { // 答え合わせ
 			t.Errorf("\x1b[1;31mQ%v: %v != %v\x1b[0m", count, output, reply)
 		}
 	}
