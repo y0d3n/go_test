@@ -5,24 +5,24 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"testing"
 )
 
-type body struct{ str string }
+type data struct{ html string }
 
-func (b *body) index(pre string) int {
-	return strings.Index(b.str, pre)
+func (d *data) index(pre string) int {
+	return strings.Index(d.html, pre)
 }
 
-func (b *body) rmPre() {
-	// <pre>と</pre>を先頭から1つずつ削除
-	b.str = strings.Replace(b.str, "<pre>", "", 1)
-	b.str = strings.Replace(b.str, "</pre>", "", 1)
+func (d *data) rmPre() {
+	d.html = strings.Replace(d.html, "<pre>", "", 1)
+	d.html = strings.Replace(d.html, "</pre>", "", 1)
 }
 
-func TestSolve(t *testing.T) {
-	res, err := http.Get("https://atcoder.jp/contests/abc148/tasks/abc148_a")
+func createFile(url, filename string) {
+	res, err := http.Get(url)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -31,14 +31,51 @@ func TestSolve(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	b := &body{string(byteBody)} // b.str = 問題ページのHTML
-	b.rmPre()                    // 使わないpreタグがあるので、1組消して調節
 
-	for count := 1; b.index("<pre>") < b.index("Problem Statement"); count++ {
-		input := b.str[b.index("<pre>")+5 : b.index("</pre>")-2] // input = 入力例
-		b.rmPre()
-		output := b.str[b.index("<pre>")+5 : b.index("</pre>")-2] // output = 出力例
-		b.rmPre()
+	f, _ := os.Create(filename)
+	defer f.Close()
+	f.Write(byteBody)
+}
+
+func isExist(filename string) bool {
+	_, err := os.Stat(filename)
+	return err == nil
+}
+
+func readFile(filename string) *data {
+	f, err := os.Open(filename)
+	defer f.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+	buf := make([]byte, 1000000)
+	for {
+		n, err := f.Read(buf)
+		if n == 0 {
+			break
+		}
+		if err != nil {
+			break
+		}
+	}
+
+	return &data{html: string(buf)}
+}
+
+func TestSolve(t *testing.T) {
+	url := "https://atcoder.jp/contests/abc148/tasks/abc148_a"
+	filename := url[strings.LastIndex(url, "/")+1:]
+	if !isExist(filename) { // もし問題のHTMLファイルがない場合、作成する
+		createFile(url, filename)
+	}
+	d := readFile(filename) // b.html = 問題ページのHTML
+	d.rmPre()               // 使わないpreタグがあるので、1組消して調節
+
+	for count := 1; d.index("<pre>") < d.index("Problem Statement"); count++ {
+		input := d.html[d.index("<pre>")+5 : d.index("</pre>")-2] // input = 入力例
+		d.rmPre()
+		output := d.html[d.index("<pre>")+5 : d.index("</pre>")-2] // output = 出力例
+		d.rmPre()
 
 		fmt.Printf("Q%v answer: %v\treply : ", count, output)
 		solve(strings.Fields(input)) // reply = 出力
