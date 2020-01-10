@@ -11,12 +11,12 @@ import (
 	"testing"
 )
 
-func rmPre(buf *string) { // <pre>と</pre>を1つ削除
+func rmPre(buf *string) { // <pre>と</pre>を1つずつ削除
 	*buf = strings.Replace(*buf, "<pre>", "", 1)
 	*buf = strings.Replace(*buf, "</pre>", "", 1)
 }
 
-func createIoFile(url, filename string) { // urlの問題ページを基に、ioファイルを作成する
+func createIoFile(url, filename string) { // urlの問題ページを基に、入出力例だけのファイルを作成する
 	res, err := http.Get(url)
 	if err != nil {
 		log.Fatal(err)
@@ -41,6 +41,12 @@ func createIoFile(url, filename string) { // urlの問題ページを基に、io
 		f.Write([]byte("<input" + strconv.Itoa(i) + "\n" + input + "\n</input" + strconv.Itoa(i) +
 			"\n<output" + strconv.Itoa(i) + "\n" + output + "\n</output" + strconv.Itoa(i) + "\n"))
 	}
+}
+
+func searchIo(buf string, count int) (i, o string) { // ファイルからcountに対応した入力例と出力例をreturn
+	i = buf[strings.Index(buf, "<input"+strconv.Itoa(count))+8 : strings.Index(buf, "</input"+strconv.Itoa(count))-1]
+	o = buf[strings.Index(buf, "<output"+strconv.Itoa(count))+9 : strings.Index(buf, "</output"+strconv.Itoa(count))-1]
+	return
 }
 
 func isExist(filename string) bool { // ファイルが存在するかどうか
@@ -76,9 +82,7 @@ func TestSolve(t *testing.T) {
 	}
 	buf := readFile("pages/" + filename) // ioファイルから読み込み
 	for count := 1; strings.Index(buf, "<input"+strconv.Itoa(count)) != -1; count++ {
-		i, o := "input"+strconv.Itoa(count), "output"+strconv.Itoa(count)
-		input := buf[strings.Index(buf, "<"+i)+8 : strings.Index(buf, "</"+i)-1]  // input == 入力例
-		output := buf[strings.Index(buf, "<"+o)+9 : strings.Index(buf, "</"+o)-1] // output == 出力例
+		input, output := searchIo(buf, count) // input = 入力例, output = 出力例
 
 		fmt.Printf("Q%v answer: %v\treply : ", count, output)
 		solve(strings.Fields(input)) // reply = 自分の出力
