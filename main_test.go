@@ -1,22 +1,27 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 	"testing"
 )
+
+type sample struct {
+	Input  string `json:"in"`
+	Output string `json:"out"`
+}
 
 func rmPre(buf *string) { // <pre>と</pre>を1つずつ削除
 	*buf = strings.Replace(*buf, "<pre>", "", 1)
 	*buf = strings.Replace(*buf, "</pre>", "", 1)
 }
 
-func createIoFile(url, filename string) { // urlの問題ページを基に、入出力例だけのファイルを作成する
+func createSampleFile(url, filename string) { // urlの問題ページを基に、入出力例のjsonファイルを作成する
 	res, err := http.Get(url)
 	if err != nil {
 		log.Fatal(err)
@@ -31,41 +36,35 @@ func createIoFile(url, filename string) { // urlの問題ページを基に、�
 
 	f, _ := os.Create(filename)
 	defer f.Close()
+	fmt.Println("Sampleファイルを作成しました")
 
-	for i := 1; strings.Index(html, "<pre>") < strings.Index(html, "Problem Statement"); i++ {
-		input := html[strings.Index(html, "<pre>")+5 : strings.Index(html, "</pre>")-2]
+	var samples [4]sample
+	for i := 0; strings.Index(html, "<pre>") < strings.Index(html, "Problem Statement"); i++ {
+		sample := &samples[i]
+		sample.Input = html[strings.Index(html, "<pre>")+5 : strings.Index(html, "</pre>")-2]
 		rmPre(&html)
-		output := html[strings.Index(html, "<pre>")+5 : strings.Index(html, "</pre>")-2]
+		sample.Output = html[strings.Index(html, "<pre>")+5 : strings.Index(html, "</pre>")-2]
 		rmPre(&html)
-
-		f.Write([]byte("<input" + strconv.Itoa(i) + "\n" + input + "\n</input" + strconv.Itoa(i) +
-			"\n<output" + strconv.Itoa(i) + "\n" + output + "\n</output" + strconv.Itoa(i) + "\n"))
 	}
+	bs, _ := json.Marshal(samples)
+	f.Write(bs)
 }
 
-func searchIo(buf string, count int) (i, o string) { // ファイルからcountに対応した入力例と出力例をreturn
-	i = buf[strings.Index(buf, "<input"+strconv.Itoa(count))+8 : strings.Index(buf, "</input"+strconv.Itoa(count))-1]
-	o = buf[strings.Index(buf, "<output"+strconv.Itoa(count))+9 : strings.Index(buf, "</output"+strconv.Itoa(count))-1]
-	return
-}
-
-func isExist(filename string) bool { // ファイルが存在するかどうか
+func isExist(filename string) bool { // ファイル、フォルダが存在するかどうか
 	_, err := os.Stat(filename)
 	return err == nil
 }
 
-func readFile(filename string) string { // ファイルを読み込み、中身をreturn
-	f, err := os.Open(filename)
-	defer f.Close()
+func readSampleFile(filename string) []sample { // jsonファイルを読み込み、構造体でreturn
+	bytes, err := ioutil.ReadFile(filename)
 	if err != nil {
 		log.Fatal(err)
 	}
-	buf := make([]byte, 10000)
-	n, err := f.Read(buf)
-	if err != nil {
+	var samples []sample
+	if err := json.Unmarshal(bytes, &samples); err != nil {
 		log.Fatal(err)
 	}
-	return string(buf[:n])
+	return samples
 }
 
 func TestSolve(t *testing.T) {
@@ -76,19 +75,20 @@ func TestSolve(t *testing.T) {
 		}
 	}
 	url := "https://atcoder.jp/contests/abc148/tasks/abc148_a"
-	filename := url[strings.LastIndex(url, "/")+1:]
-	if !isExist("pages/" + filename) { // ioファイルがない場合、作成
-		createIoFile(url, "pages/"+filename)
+	filename := "pages/" + url[strings.LastIndex(url, "/")+1:] + ".json"
+	if !isExist(filename) { // sampleファイルがない場合、作成
+		createSampleFile(url, filename)
 	}
-	buf := readFile("pages/" + filename) // ioファイルから読み込み
-	for count := 1; strings.Index(buf, "<input"+strconv.Itoa(count)) != -1; count++ {
-		input, output := searchIo(buf, count) // input = 入力例, output = 出力例
+	samples := readSampleFile(filename) // sampleファイルから読み込み
+	for count, sample := range samples {
+		if sample.Input == "" {
+			return
+		}
+		fmt.Printf("Q%v answer: %v\treply : ", count+1, sample.Output)
+		solve(strings.Fields(sample.Input)) // reply = 自分の出力
 
-		fmt.Printf("Q%v answer: %v\treply : ", count, output)
-		solve(strings.Fields(input)) // reply = 自分の出力
-
-		if output != reply { // 答え合わせ
-			t.Errorf("\x1b[1;31mQ%v: %v != %v\x1b[0m", count, output, reply)
+		if sample.Output != reply { // 答え合わせ
+			t.Errorf("\x1b[1;31mQ%v: %v != %v\x1b[0m", count+1, sample.Output, reply)
 		}
 	}
 }
