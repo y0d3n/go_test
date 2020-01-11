@@ -46,8 +46,9 @@ func createSampleFile(url, filename string) { // urlの問題ページを基に�
 		sample.Output = html[strings.Index(html, "<pre>")+5 : strings.Index(html, "</pre>")-2]
 		rmPre(&html)
 	}
-	bs, _ := json.Marshal(samples)
-	f.Write(bs)
+	fmt.Println(samples)
+	data, _ := json.Marshal(samples)
+	f.Write(data)
 }
 
 func isExist(filename string) bool { // ファイル、フォルダが存在するかどうか
