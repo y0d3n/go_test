@@ -38,15 +38,14 @@ func createSampleFile(url, filename string) { // urlの問題ページを基に�
 	defer f.Close()
 	fmt.Println("Sampleファイルを作成しました")
 
-	var samples [4]sample
+	var samples []sample
 	for i := 0; strings.Index(html, "<pre>") < strings.Index(html, "Problem Statement"); i++ {
-		sample := &samples[i]
-		sample.Input = html[strings.Index(html, "<pre>")+5 : strings.Index(html, "</pre>")-2]
+		samples = append(samples, sample{})
+		samples[i].Input = html[strings.Index(html, "<pre>")+5 : strings.Index(html, "</pre>")-2]
 		rmPre(&html)
-		sample.Output = html[strings.Index(html, "<pre>")+5 : strings.Index(html, "</pre>")-2]
+		samples[i].Output = html[strings.Index(html, "<pre>")+5 : strings.Index(html, "</pre>")-2]
 		rmPre(&html)
 	}
-	fmt.Println(samples)
 	data, _ := json.Marshal(samples)
 	f.Write(data)
 }
@@ -75,6 +74,7 @@ func TestSolve(t *testing.T) {
 			log.Fatal(err)
 		}
 	}
+
 	url := "https://atcoder.jp/contests/abc148/tasks/abc148_a"
 	filename := "pages/" + url[strings.LastIndex(url, "/")+1:] + ".json"
 	if !isExist(filename) { // sampleファイルがない場合、作成
@@ -82,10 +82,7 @@ func TestSolve(t *testing.T) {
 	}
 	samples := readSampleFile(filename) // sampleファイルから読み込み
 	for count, sample := range samples {
-		if sample.Input == "" {
-			return
-		}
-		fmt.Printf("Q%v answer: %v\treply : ", count+1, sample.Output)
+		fmt.Printf("Q%v answer: %s\treply : ", count+1, sample.Output)
 		solve(strings.Fields(sample.Input)) // reply = 自分の出力
 
 		if sample.Output != reply { // 答え合わせ
