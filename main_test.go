@@ -97,14 +97,14 @@ func TestSolve(t *testing.T) {
 		createSampleFile(url, filename)
 	}
 
-	// sampleファイルから読み込み
+	// sampleファイルから読み込み、[]sampleで返ってくる
 	samples := readSampleFile(filename)
 
 	// 答え合わせ
 	for count, sample := range samples {
 		fmt.Printf("Q%v answer: %s\treply : ", count+1, sample.Output)
 
-		solve(strings.Fields(sample.Input)) // reply = 自分の出力
+		solve(strings.Fields(sample.Input)) // main.goの関数。reply = 自分の出力
 		if sample.Output != reply {
 			t.Errorf("\x1b[1;31mQ%v: %v != %v\x1b[0m", count+1, sample.Output, reply)
 		}
