@@ -52,7 +52,7 @@ func createSampleFile(url, filename string) {
 	// jsonファイルを作成、samplesをjsonエンコードしてそのファイルに書き込む
 	f, _ := os.Create(filename)
 	defer f.Close()
-	fmt.Println("Sampleファイルを作成しました")
+	fmt.Println(filename + "を作成しました")
 	data, _ := json.Marshal(samples)
 	f.Write(data)
 }
@@ -81,7 +81,7 @@ func readSampleFile(filename string) []sample {
 }
 
 func TestSolve(t *testing.T) {
-	url := "https://atcoder.jp/contests/abc148/tasks/abc148_a"
+	url := "https://atcoder.jp/contests/abc148/tasks/abc148_b"
 	filename := "pages/" + url[strings.LastIndex(url, "/")+1:] + ".json" // filename = pages/abc0_a.json
 
 	// pagesフォルダがない場合、作成
