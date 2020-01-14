@@ -5,14 +5,14 @@
 ## ファイル構成
 ```
 $ tree
-```
->.
+.
 ├── main.go
 ├── main_test.go
 └── pages
     ├── abc148_a.json
     ├── abc148_b.json
     └── abc148_c.json....
+```
 
 ## 使用法
 ```
