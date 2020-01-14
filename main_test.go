@@ -82,11 +82,11 @@ func readSampleFile(filename string) []sample {
 
 func TestSolve(t *testing.T) {
 	url := "https://atcoder.jp/contests/abc148/tasks/abc148_a"
-	filename := "pages/" + url[strings.LastIndex(url, "/")+1:] + ".json" // filename = pages/abc0_a.json
+	filename := "io_examples/" + url[strings.LastIndex(url, "/")+1:] + ".json" // filename = pages/abc0_a.json
 
 	// pagesフォルダがない場合、作成
-	if !isExist("pages") {
-		err := os.Mkdir("pages", 0777)
+	if !isExist("io_examples") {
+		err := os.Mkdir("io_examples", 0777)
 		if err != nil {
 			log.Fatal(err)
 		}
