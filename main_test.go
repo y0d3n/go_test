@@ -81,7 +81,7 @@ func readSampleFile(filename string) []sample {
 }
 
 func TestSolve(t *testing.T) {
-	url := "https://atcoder.jp/contests/abc148/tasks/abc148_b"
+	url := "https://atcoder.jp/contests/abc148/tasks/abc148_a"
 	filename := "pages/" + url[strings.LastIndex(url, "/")+1:] + ".json" // filename = pages/abc0_a.json
 
 	// pagesフォルダがない場合、作成
