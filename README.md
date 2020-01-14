@@ -22,7 +22,7 @@ $ go test
 ```
 ### ok
 ```
-pages/abc148_aを作成しました
+io_examples/abc148_aを作成しました
 Q1 answer: 2    reply : 2
 Q2 answer: 3    reply : 3
 PASS
