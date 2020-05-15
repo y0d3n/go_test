@@ -1,5 +1,7 @@
 # go_test
 
+**go_testの練習にかいたやつ。コンテスト中に動かないので没**
+
 [AtCoder ABC 148 A](https://atcoder.jp/contests/abc148/tasks/abc148_a)を解く、main.goと  
 main.goをテストするmain_test.go
 
